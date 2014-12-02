@@ -115,7 +115,6 @@ wp db create
 passgen=`head -c 10 /dev/random | base64`
 password=${passgen:0:10}
 
-
 # launch install
 bot "et j'installe !"
 wp core install --url=$url --title="$2" --admin_user=$admin --admin_email=email --admin_password=$password
@@ -130,7 +129,7 @@ done < pluginfilepath
 # Download from private git repository
 bot "Je télécharge le thème WP0 theme :"
 cd wp-content/themes/
-git clone git@bitbucket.org:smoothiecreative/wordpress-base-theme.git
+git clone git@bitbucket.org:maximebj/wordpress-zero-theme.git
 wp theme activate $1
 
 # Create standard pages
@@ -197,14 +196,12 @@ open "${url}wp-admin"
 cd wp-content/themes
 subl $1
 
-
 # Open in finder
 cd $1
 open .
 
 # Copy password in clipboard
 echo $password | pbcopy
-
 
 # That's all ! Install summary
 bot "${green}L'installation est terminée !${normal}"
