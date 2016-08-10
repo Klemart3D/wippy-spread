@@ -121,7 +121,7 @@ wp core install --url=$url --title="$2" --admin_user=$admin --admin_email=email 
 
 # Plugins install
 bot "J'installe les plugins à partir de la liste des plugins :"
-while read line
+while read line || [ -n "$line" ]
 do
     wp plugin install $line --activate
 done < pluginfilepath
