@@ -51,6 +51,7 @@ blue='\x1B[0;34m'
 grey='\x1B[1;30m'
 red='\x1B[0;31m'
 bold='\033[1m'
+italic='\033[3m'
 normal='\033[0m'
 
 # Jump a line and display message (override echo function)
