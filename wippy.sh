@@ -53,15 +53,15 @@ red='\x1B[0;31m'
 bold='\033[1m'
 normal='\033[0m'
 
-# Jump a line
-function line {
-  echo " "
+# Jump a line and display message (override echo function)
+function echo {
+  printf "%b\n" "$*"
 }
 
 # Wippy has something to say
 function bot {
-  line
-  echo -e "${blue}${bold}(｡◕‿◕｡)${normal}  $1"
+  echo
+  echo "${blue}${bold}(｡◕‿◕｡)${normal}  $1"
 }
 
 
@@ -71,7 +71,7 @@ function bot {
 
 # Welcome !
 bot "${blue}${bold}Bonjour ! Je suis Wippy.${normal}"
-echo -e "         Je vais installer WordPress pour votre site : ${cyan}$2${normal}"
+echo "         Je vais installer WordPress pour votre site : ${cyan}$2${normal}"
 
 # CHECK :  Directory doesn't exist
 # go to wordpress installs folder
@@ -82,7 +82,7 @@ cd installpath
 if [ -d $1 ]; then
   bot "${red}Le dossier ${cyan}$1${red}existe déjà${normal}."
   echo "         Par sécurité, je ne vais pas plus loin pour ne rien écraser."
-  line
+  echo
 
   # quit script
   exit 1
@@ -121,9 +121,9 @@ wp core install --url=$url --title="$2" --admin_user=$admin --admin_email=email 
 
 # Plugins install
 bot "J'installe les plugins à partir de la liste des plugins :"
-while read line || [ -n "$line" ]
+while read echo || [ -n "$echo" ]
 do
-    wp plugin install $line --activate
+    wp plugin install $echo --activate
 done < pluginfilepath
 
 # Download from private git repository
@@ -205,14 +205,14 @@ echo $password | pbcopy
 
 # That's all ! Install summary
 bot "${green}L'installation est terminée !${normal}"
-line
+echo
 echo "URL du site:   $url"
 echo "Login admin :  admin$1"
-echo -e "Password :  ${cyan}${bold} $password ${normal}${normal}"
-line
-echo -e "${grey}(N'oubliez pas le mot de passe ! Je l'ai copié dans le presse-papier)${normal}"
+echo "Password :  ${cyan}${bold} $password ${normal}${normal}"
+echo
+echo "${grey}(N'oubliez pas le mot de passe ! Je l'ai copié dans le presse-papier)${normal}"
 
-line
+echo
 bot "à Bientôt !"
-line
-line
+echo
+echo
