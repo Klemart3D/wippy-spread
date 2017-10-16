@@ -14,8 +14,14 @@
 
 
 # VARS 
-# admin email
-email="youremail@provider.com"
+# admin email (= Git user.email if configured)
+if type git &> /dev/null && git config --get user.email &> /dev/null; then
+  email=`git config --get user.email`
+elif [[ $1 == *.* ]]; then
+  email="email@$1"
+else
+  email="email@$1.fr"
+fi
 
 # local url login
 # --> Change to fit your server URL model (eg: http://localhost:8888/my-project)
