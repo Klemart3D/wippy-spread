@@ -79,13 +79,32 @@ function bot {
 
 # Welcome !
 bot "${blue}${bold}Bonjour ! Je suis Wippy.${normal}"
-if [ -z $2 ]; then
-  echo "         Donnez-moi l'URL de votre site ainsi que le nom que vous voulez lui donner."
+
+# Check for PHP and WP-CLI installations
+if ! type php &> /dev/null; then
+  bot "Il semble que PHP n'est pas installé ou n'est pas dans votre \$PATH."
+  echo "         Merci de vérifier et relancez-moi ensuite !"
+  exit 1
+elif ! type wp &> /dev/null; then
+  bot "Il semble que WP-CLI n'est pas installé, je vais donc le télécharger…"
+  mkdir -p $HOME/bin
+  curl --progress-bar -o $HOME/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+  echo "         La version téléchargée est `php $HOME/bin/wp cli version`. Je l'ajoute à votre \$PATH…"
+  chmod +x $HOME/bin/wp
+  export PATH=$PATH:$HOME/bin
+  if type wp &> /dev/null; then
+    echo "         ${green}WP-CLI a été installé avec succès !${normal} Vous pouvez l'utiliser avec la commande 'wp'."
+ fi
+fi
+
+# Check for arguments
+if [[ ! $2 ]]; then
+  bot "Donnez-moi l'URL de votre site ainsi que le nom que vous voulez lui donner."
   echo "         Par exemple : ${grey}${italic}bash wippy.sh mon-site.fr \"Mon super blog WordPress\"${normal}"
   echo "         Ou encore : ${grey}${italic}bash wippy.sh localhost \"Un site génial\"${normal}"
   exit 1
 else
-  echo "         Je vais installer WordPress pour votre site : ${cyan}$2${normal}"
+  bot "Je vais installer WordPress pour votre site : ${cyan}$2${normal}"
 fi
 
 # Check if provided folder name for WordPress install exists and is empty
