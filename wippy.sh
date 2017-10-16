@@ -72,7 +72,14 @@ function bot {
 
 # Welcome !
 bot "${blue}${bold}Bonjour ! Je suis Wippy.${normal}"
-echo "         Je vais installer WordPress pour votre site : ${cyan}$2${normal}"
+if [ -z $2 ]; then
+  echo "         Donnez-moi l'URL de votre site ainsi que le nom que vous voulez lui donner."
+  echo "         Par exemple : ${grey}${italic}bash wippy.sh mon-site.fr \"Mon super blog WordPress\"${normal}"
+  echo "         Ou encore : ${grey}${italic}bash wippy.sh localhost \"Un site génial\"${normal}"
+  exit 1
+else
+  echo "         Je vais installer WordPress pour votre site : ${cyan}$2${normal}"
+fi
 
 # CHECK :  Directory doesn't exist
 # go to wordpress installs folder
