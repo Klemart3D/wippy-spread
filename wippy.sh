@@ -31,7 +31,8 @@ url="http://"$1":8888/"
 admin="admin-$1"
 
 # path to install your WPs
-pathtoinstall="~/Desktop"
+# --> use "$HOME" instead of "~"" (tilde) for home user directory
+installpath="$HOME/Desktop"
 
 # path to plugins.txt
 pluginfilepath="~/path/to/wippy/plugins.txt"
@@ -87,27 +88,20 @@ else
   echo "         Je vais installer WordPress pour votre site : ${cyan}$2${normal}"
 fi
 
-# CHECK :  Directory doesn't exist
-# go to wordpress installs folder
-# --> Change : to wherever you want
-cd installpath
-
-# check if provided folder name already exists
-if [ -d $1 ]; then
-  bot "${red}Le dossier ${cyan}$1${red}existe déjà${normal}."
+# Check if provided folder name for WordPress install exists and is empty
+pathtoinstall=${installpath}/$1
+if [ ! -d $pathtoinstall ]; then
+  bot "Je crée le dossier : ${cyan}$pathtoinstall${normal}"
+  mkdir -p $pathtoinstall
+elif [ -d $pathtoinstall ] && [ "$(ls -A $pathtoinstall)" ]; then
+  bot "${red}Le dossier ${cyan}${pathtoinstall}${red} existe déjà et n'est pas vide${normal}."
   echo "         Par sécurité, je ne vais pas plus loin pour ne rien écraser."
   echo
-
-  # quit script
   exit 1
 fi
 
-# create directory
-bot "Je crée le dossier : ${cyan}$1${normal}"
-mkdir $1
-cd $1
-
 # Download WP
+cd $pathtoinstall
 bot "Je télécharge WordPress..."
 wp core download --locale=fr_FR --force
 
