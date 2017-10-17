@@ -121,63 +121,73 @@ fi
 
 # Download WP
 cd $pathtoinstall
-bot "Je télécharge WordPress..."
+bot "Je télécharge WordPress…"
 wp core download --locale=fr_FR --force
 
-# check version
-bot "J'ai récupéré cette version :"
-wp core version
+# Check version
+bot "J'ai récupéré la version `wp core version` de WordPress"
 
-# create base configuration
-bot "Je lance la configuration :"
+# Create base configuration
+bot "Je lance la configuration…"
 wp core config --dbname=$1 --dbuser=root --dbpass=root --skip-check --extra-php <<PHP
 define( 'WP_DEBUG', true );
 PHP
 
 # Create database
-bot "Je crée la base de données :"
+if ! type mysql &> /dev/null; then
+  bot "Il semble que MySQL n'est pas installé ou n'est pas dans votre \$PATH."
+  if [ -d /Applications/MAMP/ ]; then
+    bot "J'ai trouvé MAMP sur votre système, je l'ajoute à votre \$PATH."
+    export PATH=$PATH:/Applications/MAMP/Library/bin/
+  else
+    echo "         Essayez de l'installer et relancez-moi !"
+    exit 1
+  fi
+fi
+
+bot "Je crée la base de données…"
 wp db create
 
 # Generate random password
 passgen=`head -c 10 /dev/random | base64`
 password=${passgen:0:10}
 
-# launch install
+# Launch install
 bot "et j'installe !"
 wp core install --url=$url --title="$2" --admin_user=$admin --admin_email=email --admin_password=$password
 
 # Plugins install
-bot "J'installe les plugins à partir de la liste des plugins :"
+bot "J'installe les plugins à partir de la liste des plugins…"
 while read echo || [ -n "$echo" ]
 do
     wp plugin install $echo --activate
 done < pluginfilepath
 
 # Download from private git repository
-bot "Je télécharge le thème WP0 theme :"
+bot "Je télécharge le thème WP0 theme…"
 cd wp-content/themes/
 git clone git@bitbucket.org:maximebj/wordpress-zero-theme.git
 wp theme activate $1
 
 # Create standard pages
-bot "Je crée les pages habituelles (Accueil, blog, contact...)"
+bot "Je crée les pages habituelles (Accueil, blog, contact...)…"
 wp post create --post_type=page --post_title='Accueil' --post_status=publish
 wp post create --post_type=page --post_title='Blog' --post_status=publish
 wp post create --post_type=page --post_title='Contact' --post_status=publish
 wp post create --post_type=page --post_title='Mentions Légales' --post_status=publish
 
 # Create fake posts
-bot "Je crée quelques faux articles"
+bot "Je crée quelques faux articles…"
 curl http://loripsum.net/api/5 | wp post generate --post_content --count=5
 
 # Change Homepage
-bot "Je change la page d'accueil et la page des articles"
+bot "Je change la page d'accueil et la page des articles…"
 wp option update show_on_front page
 wp option update page_on_front 3
 wp option update page_for_posts 4
 
 # Menu stuff
-bot "Je crée le menu principal, assigne les pages, et je lie l'emplacement du thème : "
+bot "Je crée le menu principal, assigne les pages, et je lie l'emplacement du thème…"
 wp menu create "Menu Principal"
 wp menu item add-post menu-principal 3
 wp menu item add-post menu-principal 4
@@ -185,7 +195,7 @@ wp menu item add-post menu-principal 5
 wp menu location assign menu-principal main-menu
 
 # Misc cleanup
-bot "Je supprime Hello Dolly, les thèmes de base et les articles exemples"
+bot "Je supprime Hello Dolly, les thèmes de base et les articles exemples…"
 wp post delete 1 --force # Article exemple - no trash. Comment is also deleted
 wp post delete 2 --force # page exemple
 wp plugin delete hello
@@ -195,7 +205,7 @@ wp theme delete twentyfourteen
 wp option update blogdescription ''
 
 # Permalinks to /%postname%/
-bot "J'active la structure des permaliens"
+bot "J'active la structure des permaliens…"
 wp rewrite structure "/%postname%/" --hard
 wp rewrite flush --hard
 
@@ -205,14 +215,14 @@ wp option update tag_base sujet
 
 # Git project
 # REQUIRED : download Git at http://git-scm.com/downloads
-bot "Je Git le projet :"
+bot "Je Git le projet…"
 cd ../..
 git init    # git project
 git add -A  # Add all untracked files
 git commit -m "Initial commit"   # Commit changes
 
 # Open the stuff
-bot "Je lance le navigateur, Sublime Text et le finder."
+bot "Je lance le navigateur, Sublime Text et le finder…"
 
 # Open in browser
 open $url
@@ -240,6 +250,6 @@ echo
 echo "${grey}(N'oubliez pas le mot de passe ! Je l'ai copié dans le presse-papier)${normal}"
 
 echo
-bot "à Bientôt !"
+bot "À bientôt !"
 echo
 echo
