@@ -4,7 +4,9 @@
 # Automatize your WordPress installation
 #
 # By @maximebj (maxime@smoothie-creative.com)
-#
+# https://bitbucket.org/dysign/wippy-spread/src
+# More advanced fork :
+# https://bitbucket.org/xfred/wippy-spread-advanced
 # *** Recommended for Lazy people like me ***
 #
 # How to launch wippy ?
