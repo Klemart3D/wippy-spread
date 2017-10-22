@@ -25,12 +25,15 @@ else
   email="email@$1.fr"
 fi
 
-# local url login
-# --> Change to fit your server URL model (eg: http://localhost:8888/my-project)
-url="http://"$1":8888/"
+# WordPress settings
+wp_url="http://"$1"/" # "http://localhost:8888/my-project" or "http://monsite.fr"
+wp_admin="admin-$1"
 
-# admin login
-admin="admin-$1"
+# Database settings
+db_host="127.0.0.1" # Default "localhost". If doesn't works try "127.0.0.1"
+db_name=$1
+db_user="root"
+db_password="root"
 
 # path to install your WPs
 # --> use "$HOME" instead of "~"" (tilde) for home user directory
@@ -131,7 +134,7 @@ bot "J'ai récupéré la version `wp core version` de WordPress"
 
 # Create base configuration
 bot "Je lance la configuration…"
-wp core config --dbname=$1 --dbuser=root --dbpass=root --skip-check --extra-php <<PHP
+wp core config --dbhost=$db_host --dbname=$db_name --dbuser=$db_user --dbpass=$db_password --skip-check --extra-php <<PHP
 define( 'WP_DEBUG', true );
 PHP
 
@@ -147,16 +150,30 @@ if ! type mysql &> /dev/null; then
   fi
 fi
 
-bot "Je crée la base de données…"
-wp db create
+bot "Je vérifie l'accès à la base de données…"
+sql_query=`mysql -u $db_user -p$db_password --skip-column-names -e "SHOW DATABASES LIKE '$db_name'"`
+if [ "$sql_query" == "$db_name" ]; then
+  sql_query2=`mysql -u $db_user -p$db_password --skip-column-names -e "SELECT count(*) FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema = '$db_name'"`
+  if [ "$sql_query2" == 0 ]; then
+    echo "         J'ai trouvé une base de données vide ${cyan}$db_name${normal}. Je la supprime…"
+    wp db drop --yes
+  else
+    echo "         ${red}J'ai trouvé une base de données non vide nommée ${cyan}$db_name${normal}."
+    echo "         Par sécurité je ne vais pas plus loin pour ne rien écraser."
+    echo
+    exit 1
+  fi
+    bot "Je créé la base de données…"
+    wp db create
+fi
 
 # Generate random password
 passgen=`head -c 10 /dev/random | base64`
 password=${passgen:0:10}
 
 # Launch install
-bot "et j'installe !"
-wp core install --url=$url --title="$2" --admin_user=$admin --admin_email=email --admin_password=$password
+bot "Et j'installe WordPress !"
+wp core install --url=$wp_url --title="$2" --admin_user=$wp_admin --admin_email=$email --admin_password=$password
 
 # Plugins install
 bot "J'installe les plugins à partir de la liste des plugins…"
@@ -228,7 +245,7 @@ bot "Je lance le navigateur, Sublime Text et le finder…"
 
 # Open in browser
 open $url
-open "${url}wp-admin"
+open "${wp_url}wp-admin"
 
 # Open in Sublime text
 # REQUIRED : activate subl alias at https://www.sublimetext.com/docs/3/osx_command_line.html
@@ -245,8 +262,8 @@ echo $password | pbcopy
 # That's all ! Install summary
 bot "${green}L'installation est terminée !${normal}"
 echo
-echo "URL du site:   $url"
-echo "Login admin :  admin$1"
+echo "URL du site:   $wp_url"
+echo "Login admin :  $wp_admin"
 echo "Password :  ${cyan}${bold} $password ${normal}${normal}"
 echo
 echo "${grey}(N'oubliez pas le mot de passe ! Je l'ai copié dans le presse-papier)${normal}"
