@@ -33,6 +33,9 @@ db_password="root" # "root" ou "" (empty) for dev local
 # Path to plugins.txt
 pluginfilepath="$PWD/plugins.txt" # "$PWD" = same folder as wippy.sh
 
+# Theme : WordPress slug theme name ("twentysixteen"), path to a ZIP file or git URL ("git@github.com:…")
+wp_theme="git@github.com:Fruitfulcode/Fruitful.git"
+
 #  ===============
 #  = Fancy Stuff =
 #  ===============
@@ -135,10 +138,11 @@ if ! type mysql &> /dev/null; then
 fi
 
 bot "Je vérifie l'accès à la base de données…"
-sql_query=`mysql -u $db_user -p$db_password --skip-column-names -e "SHOW DATABASES LIKE '$db_name'"`
-if [ "$sql_query" == "$db_name" ]; then
-  sql_query2=`mysql -u $db_user -p$db_password --skip-column-names -e "SELECT count(*) FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema = '$db_name'"`
-  if [ "$sql_query2" == 0 ]; then
+sql_cmd=`mysql -u $db_user -p$db_password --skip-column-names -e "SHOW DATABASES LIKE '$db_name'"`
+if [ "$sql_cmd" == "$db_name" ]; then
+  sql_query="SELECT count(*) FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema = '$db_name'"
+  sql_cmd2=`mysql -u $db_user -p$db_password --skip-column-names -e "$sql_query"`
+  if [ "$sql_cmd2" == 0 ]; then
     echo "         J'ai trouvé une base de données vide ${cyan}$db_name${normal}. Je la supprime…"
     wp db drop --yes
   else
@@ -179,11 +183,16 @@ do
   fi 
 done < $pluginfilepath
 
-# Download from private git repository
-bot "Je télécharge le thème WP0 theme…"
-cd wp-content/themes/
-git clone git@bitbucket.org:maximebj/wordpress-zero-theme.git
-wp theme activate $1
+# Download and install WordPress theme
+bot "Je télécharge le thème désiré…"
+if [[ $wp_theme =~ ^git@* ]] && git ls-remote $wp_theme &> /dev/null; then
+  cd wp-content/themes/
+  git clone $wp_theme
+  wp_theme_name=`basename $wp_theme .git`
+  wp theme activate $wp_theme_name
+else
+  wp theme install $wp_theme --activate 
+fi
 
 # Create standard pages
 bot "Je crée les pages habituelles (Accueil, blog, contact...)…"
