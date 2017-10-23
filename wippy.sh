@@ -163,8 +163,9 @@ if [ "$sql_query" == "$db_name" ]; then
     echo
     exit 1
   fi
-    bot "Je créé la base de données…"
-    wp db create
+else
+  bot "Je créé la base de données…"
+  wp db create
 fi
 
 # Generate random password
