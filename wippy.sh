@@ -11,23 +11,18 @@
 #
 # How to launch wippy ?
 # bash wippy.sh sitename "My WP Blog"
-# $1 = folder name & database name
+# $1 = Website name, folder name & database name
 # $2 = Site title
 
 
-# VARS 
-# admin email (= Git user.email if configured)
-if type git &> /dev/null && git config --get user.email &> /dev/null; then
-  email=`git config --get user.email`
-elif [[ $1 == *.* ]]; then
-  email="email@$1"
-else
-  email="email@$1.fr"
-fi
+#  ============================
+#  = Variables (to customize) =
+#  ============================
 
 # WordPress settings
 wp_url="http://"$1"/" # "http://localhost:8888/my-project" or "http://monsite.fr"
 wp_admin="admin-$1"
+wp_install_path="$HOME/Desktop" # Use "$HOME" instead of "~"" (tilde) for home user directory
 
 # Database settings
 db_host="127.0.0.1" # Default "localhost". If doesn't works try "127.0.0.1"
@@ -35,28 +30,20 @@ db_name=$1
 db_user="root"
 db_password="root"
 
-# path to install your WPs
-# --> use "$HOME" instead of "~"" (tilde) for home user directory
-installpath="$HOME/Desktop"
-
-# path to plugins.txt
-pluginfilepath="~/path/to/wippy/plugins.txt"
-
-# end VARS ---
-
-
+# Path to plugins.txt
+pluginfilepath="$PWD/plugins.txt"
+echo $pluginfilepath
 
 
 #  ===============
 #  = Fancy Stuff =
 #  ===============
-# not mandatory at all
 
 # Stop on error
 set -e
 
-# colorize and formatting command line
-# You need iTerm and activate 256 color mode in order to work : http://kevin.colyar.net/wp-content/uploads/2011/01/Preferences.jpg
+# Colorize and formatting command line
+# (256 color mode must be activate in Terminal or iTerm)
 green='\x1B[0;32m'
 cyan='\x1B[1;36m'
 blue='\x1B[0;34m'
@@ -166,6 +153,15 @@ if [ "$sql_query" == "$db_name" ]; then
 else
   bot "Je créé la base de données…"
   wp db create
+fi
+
+# Get admin email (= Git user.email if configured)
+if type git &> /dev/null && git config --get user.email &> /dev/null; then
+  email=`git config --get user.email`
+elif [[ $1 == *.* ]]; then
+  email="wp_admin@$1"
+else
+  email="wp_admin@$1.fr"
 fi
 
 # Generate random password
