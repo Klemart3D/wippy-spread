@@ -28,12 +28,10 @@ wp_install_path="$HOME/Desktop" # Use "$HOME" instead of "~"" (tilde) for home u
 db_host="127.0.0.1" # Default "localhost". If doesn't works try "127.0.0.1"
 db_name=$1
 db_user="root"
-db_password="root"
+db_password="root" # "root" ou "" (empty) for dev local
 
 # Path to plugins.txt
-pluginfilepath="$PWD/plugins.txt"
-echo $pluginfilepath
-
+pluginfilepath="$PWD/plugins.txt" # "$PWD" = same folder as wippy.sh
 
 #  ===============
 #  = Fancy Stuff =
@@ -50,7 +48,6 @@ blue='\x1B[0;34m'
 grey='\x1B[1;30m'
 red='\x1B[0;31m'
 bold='\033[1m'
-italic='\033[3m'
 normal='\033[0m'
 
 # Jump a line and display message (override echo function)
@@ -92,15 +89,15 @@ fi
 # Check for arguments
 if [[ ! $2 ]]; then
   bot "Donnez-moi l'URL de votre site ainsi que le nom que vous voulez lui donner."
-  echo "         Par exemple : ${grey}${italic}bash wippy.sh mon-site.fr \"Mon super blog WordPress\"${normal}"
-  echo "         Ou encore : ${grey}${italic}bash wippy.sh localhost \"Un site génial\"${normal}"
+  echo "         Par exemple : ${grey}bash wippy.sh mon-site.fr \"Mon super blog WordPress\"${normal}"
+  echo "         Ou encore : ${grey}bash wippy.sh localhost \"Un site génial\"${normal}"
   exit 1
 else
   bot "Je vais installer WordPress pour votre site : ${cyan}$2${normal}"
 fi
 
 # Check if provided folder name for WordPress install exists and is empty
-pathtoinstall=${installpath}/$1
+pathtoinstall=${wp_install_path}/$1
 if [ ! -d $pathtoinstall ]; then
   bot "Je crée le dossier : ${cyan}$pathtoinstall${normal}"
   mkdir -p $pathtoinstall
@@ -174,10 +171,13 @@ wp core install --url=$wp_url --title="$2" --admin_user=$wp_admin --admin_email=
 
 # Plugins install
 bot "J'installe les plugins à partir de la liste des plugins…"
-while read echo || [ -n "$echo" ]
+while IFS=$' \t\n\r' read -r plugin
 do
-    wp plugin install $echo --activate
-done < pluginfilepath
+  # Ignore comments and new linebreaks
+  if [[ $plugin != \#* ]] && [ -n "$plugin" ]; then
+    wp plugin install $plugin --activate
+  fi 
+done < $pluginfilepath
 
 # Download from private git repository
 bot "Je télécharge le thème WP0 theme…"
