@@ -23,6 +23,8 @@
 wp_url="http://"$1"/" # "http://localhost:8888/my-project" or "http://monsite.fr"
 wp_admin="admin-$1"
 wp_install_path="$HOME/Desktop" # Use "$HOME" instead of "~"" (tilde) for home user directory
+wp_title=$2
+wp_description=$wp_title
 
 # Database settings
 db_host="127.0.0.1" # Default "localhost". If doesn't works try "127.0.0.1"
@@ -101,7 +103,7 @@ if [[ ! $2 ]]; then
   echo "         Ou encore : ${grey}bash wippy.sh localhost \"Un site génial\"${normal}"
   exit 1
 else
-  bot "Je vais installer WordPress pour votre site : ${cyan}$2${normal}"
+  bot "Je vais installer WordPress pour votre site : ${cyan}$wp_title${normal}"
 fi
 
 # Check if provided folder name for WordPress install exists and is empty
@@ -170,16 +172,23 @@ else
   email="wp_admin@$1.fr"
 fi
 
-# Generate random password
-passgen=`head -c 10 /dev/random | base64`
-password=${passgen:0:10}
-
-# Launch install
+# Launch WordPress install
 bot "Et j'installe WordPress !"
-wp core install --url=$wp_url --title="$2" --admin_user=$wp_admin --admin_email=$email --admin_password=$password
-# Copy password in clipboard
-echo $password | pbcopy
+passgen=`head -c 10 /dev/random | base64` # Generate random password
+password=${passgen:0:10} 
+wp core install --url=$wp_url --title="$wp_title" --admin_user=$wp_admin --admin_email=$email --admin_password=$password
+echo $password | pbcopy # Copy password in clipboard
 bot "J'ai copié le mot de passe ${cyan}$password${normal} dans le presse-papier !"
+
+# Cleanup
+bot "Je supprime Hello Dolly, les thèmes de base et les articles exemples…"
+wp plugin delete hello
+wp theme delete twentyfifteen
+wp theme delete twentysixteen
+wp theme delete twentyseventeen
+wp post delete $(wp post list --post_type='page' --format=ids) --force
+wp post delete $(wp post list --post_type='post' --format=ids) --force
+wp term update category 1 --name="Nouveautés" # Rename default "uncategorized" category 
 
 # Plugins install
 bot "J'installe les plugins à partir de la liste des plugins…"
@@ -201,16 +210,6 @@ if [[ $wp_theme =~ ^git@* ]] && git ls-remote $wp_theme &> /dev/null; then
 else
   wp theme install $wp_theme --activate 
 fi
-
-# Misc cleanup
-bot "Je supprime Hello Dolly, les thèmes de base et les articles exemples…"
-wp post delete 1 --force # Article exemple - no trash. Comment is also deleted
-wp post delete 2 --force # Page exemple
-wp plugin delete hello
-wp theme delete twentyfifteen
-wp theme delete twentysixteen
-wp theme delete twentyseventeen
-wp option update blogdescription "$2"
 
 # Create standard pages
 bot "Je met en place l'arborescence du site…"
@@ -247,7 +246,7 @@ do
       fi
     # If arobase, it's a standalone page  
     elif [[ "$tree_line" =~ ^@.* ]]; then
-        tree_line_trim="${tree_line//&/}"
+        tree_line_trim="${tree_line//@/}"
         post_id="$(wp post create --porcelain --post_type=page --post_status=publish --post_title="$tree_line_trim")"
         echo "Page seule ${cyan}"$tree_line_trim"${normal} créée (ID $post_id)"
         [[ $homepage = 1 ]] && wp option update page_on_front $post_id && homepage=0 # Page ID displayed on front page (homepage)
@@ -266,11 +265,15 @@ done < $wp_tree_file
 
 # Change some options
 # Doc : https://codex.wordpress.org/Option_Reference
-bot "Je change la page d'accueil et la page des articles…"
+bot "J'applique quelques modifications de paramètres…"
 wp option update show_on_front page # A static page as homepage. Default : latest posts
 wp option update page_for_posts 4 # Page ID that displays posts (blog)
 wp option update category_base theme # Default category base for categories permalink
 wp option update tag_base sujet # Default tag base for tags permalink
+wp option update blogdescription "$wp_description" # Set a description of website
+wp option update default_comment_status 0 # Disable comments, overridable by post
+wp option update comment_registration 1 # Users must be logged in to comment 
+wp option update uploads_use_yearmonth_folders 0 # Disable year/month folders for medias
 
 # Permalinks to /%postname%/
 bot "J'active la structure des permaliens…"
@@ -303,7 +306,11 @@ fi
 # cd $1
 # open .
 
-# That's all ! Install summary
+#  ======================
+#  = That's all folks ! =
+#  ======================
+
+# Install summary
 bot "${green}Wippy yeah ! L'installation est terminée !${normal}"
 echo
 echo "         Voici un récapitulatif des informations à conserver :"
