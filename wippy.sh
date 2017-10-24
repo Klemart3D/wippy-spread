@@ -44,7 +44,8 @@ wp_theme="Fruitful"
 #  = Fancy Stuff =
 #  ===============
 
-# Stop on error
+# Clear terminal and stop on error
+clear
 set -e
 
 # Colorize and formatting command line
