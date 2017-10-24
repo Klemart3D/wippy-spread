@@ -1,0 +1,27 @@
+## ======================================== ##
+##  ARBORESCENCE DU SITE À METTRE EN PLACE  ##
+## ======================================== ##
+##
+## Inscrire un nom de menu ou de page par ligne, sans guillemets
+## Une page seule, hors menu, est précédée d'un arobase ("@")
+## Une page de menu est précédée de un ou plusieurs underscore(s) ("_") selon son niveau d'arborescence
+## L'arborescence des pages peut aller jusqu'à 3 niveaux :
+## |Mon menu principal
+## |_Ma page de niveau 1
+## |__Ma page de niveau 2
+## |___Ma page de niveau 3
+## Le premier menu du fichier sera le menu principal du site
+## La première page du fichier (incluse dans un menu ou non) sera la page d'accueil du site
+## NB : les lignes commençant par # et les sauts de ligne sont ignorés
+
+Menu principal
+_Accueil
+_Blog
+_Notre super boutique
+__Produits cools
+___Produits méga cools
+_À propos
+__Nous contacter
+__Nous trouver
+
+@Mentions légales
