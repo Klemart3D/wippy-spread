@@ -40,7 +40,7 @@ wp_tree_file="$PWD/tree.txt" # "$PWD" = same folder as wippy.sh
 
 # Theme : WordPress slug theme name ("twentysixteen"), path to a ZIP file or git URL ("git@github.com:…")
 # wp_theme="git@github.com:Fruitfulcode/Fruitful.git"
-wp_theme="Fruitful"
+wp_theme="git@github.com:morganleek/scm-wp-base.git"
 
 #  ===============
 #  = Fancy Stuff =
@@ -180,16 +180,6 @@ wp core install --url=$wp_url --title="$wp_title" --admin_user=$wp_admin --admin
 echo $password | pbcopy # Copy password in clipboard
 bot "J'ai copié le mot de passe ${cyan}$password${normal} dans le presse-papier !"
 
-# Cleanup
-bot "Je supprime Hello Dolly, les thèmes de base et les articles exemples…"
-wp plugin delete hello
-wp theme delete twentyfifteen
-wp theme delete twentysixteen
-wp theme delete twentyseventeen
-wp post delete $(wp post list --post_type='page' --format=ids) --force
-wp post delete $(wp post list --post_type='post' --format=ids) --force
-wp term update category 1 --name="Nouveautés" # Rename default "uncategorized" category 
-
 # Plugins install
 bot "J'installe les plugins à partir de la liste des plugins…"
 while IFS=$' \t\n\r' read -r plugin  || [ -n "$plugin" ] # Fix Posix ignored last line
@@ -210,6 +200,16 @@ if [[ $wp_theme =~ ^git@* ]] && git ls-remote $wp_theme &> /dev/null; then
 else
   wp theme install $wp_theme --activate 
 fi
+
+# Cleanup
+bot "Je supprime Hello Dolly, les thèmes de base et les articles exemples…"
+wp plugin delete hello
+wp theme delete twentyfifteen
+wp theme delete twentysixteen
+wp theme delete twentyseventeen
+wp post delete $(wp post list --post_type='page' --format=ids) --force
+wp post delete $(wp post list --post_type='post' --format=ids) --force
+wp term update category 1 --name="Nouveautés" # Rename default "uncategorized" category 
 
 # Create standard pages
 bot "Je met en place l'arborescence du site…"
