@@ -30,11 +30,15 @@ db_name=$1
 db_user="root"
 db_password="root" # "root" ou "" (empty) for dev local
 
-# Path to plugins.txt
+# Plugins : path to plugins.txt
 pluginfilepath="$PWD/plugins.txt" # "$PWD" = same folder as wippy.sh
 
+# Menu tree : path to tree.txt
+wp_tree_file="$PWD/tree.txt" # "$PWD" = same folder as wippy.sh
+
 # Theme : WordPress slug theme name ("twentysixteen"), path to a ZIP file or git URL ("git@github.com:…")
-wp_theme="git@github.com:Fruitfulcode/Fruitful.git"
+# wp_theme="git@github.com:Fruitfulcode/Fruitful.git"
+wp_theme="Fruitful"
 
 #  ===============
 #  = Fancy Stuff =
@@ -172,10 +176,13 @@ password=${passgen:0:10}
 # Launch install
 bot "Et j'installe WordPress !"
 wp core install --url=$wp_url --title="$2" --admin_user=$wp_admin --admin_email=$email --admin_password=$password
+# Copy password in clipboard
+echo $password | pbcopy
+bot "J'ai copié le mot de passe ${cyan}$password${normal} dans le presse-papier !"
 
 # Plugins install
 bot "J'installe les plugins à partir de la liste des plugins…"
-while IFS=$' \t\n\r' read -r plugin
+while IFS=$' \t\n\r' read -r plugin  || [ -n "$plugin" ] # Fix Posix ignored last line
 do
   # Ignore comments and new linebreaks
   if [[ $plugin != \#* ]] && [ -n "$plugin" ]; then
@@ -194,87 +201,117 @@ else
   wp theme install $wp_theme --activate 
 fi
 
-# Create standard pages
-bot "Je crée les pages habituelles (Accueil, blog, contact...)…"
-wp post create --post_type=page --post_title='Accueil' --post_status=publish
-wp post create --post_type=page --post_title='Blog' --post_status=publish
-wp post create --post_type=page --post_title='Contact' --post_status=publish
-wp post create --post_type=page --post_title='Mentions Légales' --post_status=publish
-
-# Create fake posts
-bot "Je crée quelques faux articles…"
-curl http://loripsum.net/api/5 | wp post generate --post_content --count=5
-
-# Change Homepage
-bot "Je change la page d'accueil et la page des articles…"
-wp option update show_on_front page
-wp option update page_on_front 3
-wp option update page_for_posts 4
-
-# Menu stuff
-bot "Je crée le menu principal, assigne les pages, et je lie l'emplacement du thème…"
-wp menu create "Menu Principal"
-wp menu item add-post menu-principal 3
-wp menu item add-post menu-principal 4
-wp menu item add-post menu-principal 5
-wp menu location assign menu-principal main-menu
-
 # Misc cleanup
 bot "Je supprime Hello Dolly, les thèmes de base et les articles exemples…"
 wp post delete 1 --force # Article exemple - no trash. Comment is also deleted
-wp post delete 2 --force # page exemple
+wp post delete 2 --force # Page exemple
 wp plugin delete hello
-wp theme delete twentytwelve
-wp theme delete twentythirteen
-wp theme delete twentyfourteen
-wp option update blogdescription ''
+wp theme delete twentyfifteen
+wp theme delete twentysixteen
+wp theme delete twentyseventeen
+wp option update blogdescription "$2"
+
+# Create standard pages
+bot "Je met en place l'arborescence du site…"
+first_menu=1 # Var only for main menu
+homepage=1 # Var for homepage
+while read -r tree_line  || [ -n "$tree_line" ] # Fix Posix ignored last line
+do
+  # Ignore comments and new linebreaks
+  if [[ $tree_line != \#* ]] && [ -n "$tree_line" ]; then
+    # If undescore, it's a menu page
+    if [[ "$tree_line" =~ ^_.* ]]; then
+      # Level 3 page
+      if [[ "$tree_line" =~ ^___.* ]]; then
+        tree_line_trim="${tree_line//_/}"
+        post_id="$(wp post create --porcelain --post_type=page --post_status=publish --post_title="$tree_line_trim")"
+        echo "Page de niveau 3 ${cyan}"$tree_line_trim"${normal} créée (ID $post_id - Page parente $ref_p2)"
+        wp menu item add-post "$ref_menu" $post_id --parent-id=`expr $ref_p2 + 1`
+      # Level 2 page  
+      elif [[ "$tree_line" =~ ^__.* ]]; then
+        tree_line_trim="${tree_line//_/}"
+        post_id="$(wp post create --porcelain --post_type=page --post_status=publish --post_title="$tree_line_trim")"
+        echo "Page de niveau 2 ${cyan}"$tree_line_trim"${normal} créée (ID $post_id - Page parente $ref_p1)"
+        ref_p2=$post_id
+        wp menu item add-post "$ref_menu" $post_id --parent-id=`expr $ref_p1 + 1`
+      # Level 1 page
+      else
+        tree_line_trim="${tree_line//_/}"
+        post_id="$(wp post create --porcelain --post_type=page --post_status=publish --post_title="$tree_line_trim")"
+        echo "Page de niveau 1 ${cyan}"$tree_line_trim"${normal} créée (ID $post_id - Menu parent $ref_menu)"
+        ref_p1=$post_id
+        ref_p2=""
+        wp menu item add-post "$ref_menu" $post_id
+        [[ $homepage = 1 ]] && wp option update page_on_front $post_id && homepage=0 # Page ID displayed on front page (homepage)
+      fi
+    # If arobase, it's a standalone page  
+    elif [[ "$tree_line" =~ ^@.* ]]; then
+        tree_line_trim="${tree_line//&/}"
+        post_id="$(wp post create --porcelain --post_type=page --post_status=publish --post_title="$tree_line_trim")"
+        echo "Page seule ${cyan}"$tree_line_trim"${normal} créée (ID $post_id)"
+        [[ $homepage = 1 ]] && wp option update page_on_front $post_id && homepage=0 # Page ID displayed on front page (homepage)
+    # Else it's a menu   
+    else
+      menu_id="$(wp menu create --porcelain "$tree_line")"
+      echo "Je crée le menu : ${cyan}"$tree_line"${normal}  (ID $menu_id)"
+      ref_menu=$menu_id
+      ref_p1=""
+      ref_p2=""
+      [[ $first_menu = 1 ]] && wp menu location assign "$tree_line" primary
+      first_menu=0
+    fi
+  fi 
+done < $wp_tree_file
+
+# Change some options
+# Doc : https://codex.wordpress.org/Option_Reference
+bot "Je change la page d'accueil et la page des articles…"
+wp option update show_on_front page # A static page as homepage. Default : latest posts
+wp option update page_for_posts 4 # Page ID that displays posts (blog)
+wp option update category_base theme # Default category base for categories permalink
+wp option update tag_base sujet # Default tag base for tags permalink
 
 # Permalinks to /%postname%/
 bot "J'active la structure des permaliens…"
 wp rewrite structure "/%postname%/" --hard
 wp rewrite flush --hard
 
-# cat and tag base update
-wp option update category_base theme
-wp option update tag_base sujet
-
 # Git project
-# REQUIRED : download Git at http://git-scm.com/downloads
-bot "Je Git le projet…"
-cd ../..
-git init    # git project
-git add -A  # Add all untracked files
-git commit -m "Initial commit"   # Commit changes
+if type git &> /dev/null; then
+  bot "Je versionnne le projet avec Git…"
+  cd $pathtoinstall
+  git init # Init a git project
+  git add -A # Add all untracked files
+  git commit --quiet -m "Initial commit" # Commit changes
+  echo "         Projet versionné avec succès."
+fi
 
 # Open the stuff
-bot "Je lance le navigateur, Sublime Text et le finder…"
+# bot "Je lance le navigateur, Sublime Text et le finder…"
 
 # Open in browser
-open $url
-open "${wp_url}wp-admin"
+# open $url
+# open "${wp_url}wp-admin"
 
 # Open in Sublime text
 # REQUIRED : activate subl alias at https://www.sublimetext.com/docs/3/osx_command_line.html
-cd wp-content/themes
-subl $1
+# cd wp-content/themes
+# subl $1
 
 # Open in finder
-cd $1
-open .
-
-# Copy password in clipboard
-echo $password | pbcopy
+# cd $1
+# open .
 
 # That's all ! Install summary
-bot "${green}L'installation est terminée !${normal}"
+bot "${green}Wippy yeah ! L'installation est terminée !${normal}"
 echo
-echo "URL du site:   $wp_url"
-echo "Login admin :  $wp_admin"
-echo "Password :  ${cyan}${bold} $password ${normal}${normal}"
+echo "         Voici un récapitulatif des informations à conserver :"
 echo
-echo "${grey}(N'oubliez pas le mot de passe ! Je l'ai copié dans le presse-papier)${normal}"
-
+echo "         URL du site :     ${cyan}$wp_url${normal}"
+echo "         URL de l'admin :  ${cyan}${wp_url}wp-admin${normal}"
+echo "         Login admin :     ${cyan}$wp_admin${normal}"
+echo "         Email admin :     ${cyan}$email${normal}"
+echo "         Password :        ${cyan}${bold}$password${normal}${grey} (Déjà copié dans le presse-papier !)${normal}"
 echo
-bot "À bientôt !"
-echo
+bot "${blue}${bold}À bientôt !${normal}"
 echo
