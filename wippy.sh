@@ -222,6 +222,9 @@ wp theme delete twentyseventeen
 wp post delete $(wp post list --post_type='page' --format=ids) --force
 wp post delete $(wp post list --post_type='post' --format=ids) --force
 wp term update category 1 --name="Nouveautés" # Rename default "uncategorized" category 
+if [ -d "$pathtoinstall/wp-config-sample.php" ]; then
+  rm "$pathtoinstall/wp-config-sample.php" # Deleting sample config file
+fi
 
 # Create standard pages
 bot "Je met en place l'arborescence du site…"
