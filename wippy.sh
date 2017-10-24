@@ -39,8 +39,8 @@ pluginfilepath="$PWD/plugins.txt" # "$PWD" = same folder as wippy.sh
 wp_tree_file="$PWD/tree.txt" # "$PWD" = same folder as wippy.sh
 
 # Theme : WordPress slug theme name ("twentysixteen"), path to a ZIP file or git URL ("git@github.com:…")
-# wp_theme="git@github.com:Fruitfulcode/Fruitful.git"
-wp_theme="git@github.com:morganleek/scm-wp-base.git"
+wp_theme="Sydney"
+
 
 #  ===============
 #  = Fancy Stuff =
@@ -94,6 +94,11 @@ elif ! type wp &> /dev/null; then
   if type wp &> /dev/null; then
     echo "         ${green}WP-CLI a été installé avec succès !${normal} Vous pouvez l'utiliser avec la commande 'wp'."
  fi
+fi
+# Adding mod_rewrite to WP-CLI config to regenerate .htaccess 
+if [ ! -e "$HOME/.wp-cli/config.yml" ]; then
+  echo -e "apache_modules:\n  - mod_rewrite\n" >> "$HOME/.wp-cli/config.yml"
+  chmod u+rw "$HOME/.wp-cli/config.yml"
 fi
 
 # Check for arguments
@@ -278,7 +283,7 @@ wp option update uploads_use_yearmonth_folders 0 # Disable year/month folders fo
 # Permalinks to /%postname%/
 bot "J'active la structure des permaliens…"
 wp rewrite structure "/%postname%/" --hard
-wp rewrite flush --hard
+wp rewrite flush --hard # Regenerate .htaccess file
 
 # Git project
 if type git &> /dev/null; then
@@ -290,21 +295,24 @@ if type git &> /dev/null; then
   echo "         Projet versionné avec succès."
 fi
 
-# Open the stuff
-# bot "Je lance le navigateur, Sublime Text et le finder…"
-
-# Open in browser
-# open $url
-# open "${wp_url}wp-admin"
-
+# Launching apps
+bot "Je lance le navigateur, Sublime Text et le Finder…"
+open $wp_url # Open front-office in browser
+open "${wp_url}wp-admin" # Open back-office in browser
 # Open in Sublime text
-# REQUIRED : activate subl alias at https://www.sublimetext.com/docs/3/osx_command_line.html
-# cd wp-content/themes
-# subl $1
+# Doc : https://www.sublimetext.com/docs/3/osx_command_line.html
+if ! type subl &> /dev/null; then
+  if [ -d "/Applications/Sublime Text"* ]; then
+    ln -s "/Applications/Sublime Text"*"/Contents/SharedSupport/bin/subl" ~/bin/subl
+  else
+    bot "         Je ne parviens pas à localiser Sublime Text."
+  fi
+fi
+if type subl &> /dev/null; then
+  subl $pathtoinstall/wp-content/themes
+fi  
+open $pathtoinstall # Open in Finder
 
-# Open in finder
-# cd $1
-# open .
 
 #  ======================
 #  = That's all folks ! =
