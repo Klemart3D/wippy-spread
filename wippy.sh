@@ -56,7 +56,8 @@ green='\x1B[0;32m'
 cyan='\x1B[1;36m'
 blue='\x1B[0;34m'
 grey='\x1B[1;30m'
-red='\x1B[0;31m'
+red='\x1B[0;91m'
+magenta='\x1B[0;95m'
 bold='\033[1m'
 normal='\033[0m'
 
@@ -113,14 +114,21 @@ fi
 
 # Check if provided folder name for WordPress install exists and is empty
 pathtoinstall=${wp_install_path}/$1
+if [ -d $pathtoinstall ] && [ "$(ls -A $pathtoinstall)" ]; then
+  bot "${red}Le dossier ${cyan}${pathtoinstall}${red} existe déjà et n'est pas vide${normal}."
+  bot "${magenta}Voulez-vous que je supprime le dossier ?${normal} [o/N]"
+  read DELETE
+  if [[ $DELETE = [OoYy] ]]; then 
+    rm -rf $pathtoinstall
+    echo "         J'ai supprimé le dossier."
+  else
+    bot "Bien, je stoppe l'installation."
+    exit 1
+  fi
+fi
 if [ ! -d $pathtoinstall ]; then
   bot "Je crée le dossier : ${cyan}$pathtoinstall${normal}"
   mkdir -p $pathtoinstall
-elif [ -d $pathtoinstall ] && [ "$(ls -A $pathtoinstall)" ]; then
-  bot "${red}Le dossier ${cyan}${pathtoinstall}${red} existe déjà et n'est pas vide${normal}."
-  echo "         Par sécurité, je ne vais pas plus loin pour ne rien écraser."
-  echo
-  exit 1
 fi
 
 # Download WP
@@ -152,21 +160,20 @@ fi
 bot "Je vérifie l'accès à la base de données…"
 sql_cmd=`mysql -u $db_user -p$db_password --skip-column-names -e "SHOW DATABASES LIKE '$db_name'"`
 if [ "$sql_cmd" == "$db_name" ]; then
-  sql_query="SELECT count(*) FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema = '$db_name'"
-  sql_cmd2=`mysql -u $db_user -p$db_password --skip-column-names -e "$sql_query"`
-  if [ "$sql_cmd2" == 0 ]; then
-    echo "         J'ai trouvé une base de données vide ${cyan}$db_name${normal}. Je la supprime…"
+  bot "${red}J'ai trouvé une base de données nommée ${cyan}$db_name${normal}."
+  bot "${magenta}Voulez-vous que je supprime cette base de données ?${normal} [o/N]"
+  read DELETE
+  if [[ $DELETE = [OoYy] ]]; then 
     wp db drop --yes
+    echo "         J'ai supprimé la base de données."
   else
-    echo "         ${red}J'ai trouvé une base de données non vide nommée ${cyan}$db_name${normal}."
-    echo "         Par sécurité je ne vais pas plus loin pour ne rien écraser."
-    echo
+    bot "Bien, je stoppe l'installation."
     exit 1
   fi
-else
-  bot "Je créé la base de données…"
-  wp db create
 fi
+
+bot "Je créé la base de données…"
+wp db create
 
 # Get admin email (= Git user.email if configured)
 if type git &> /dev/null && git config --get user.email &> /dev/null; then
