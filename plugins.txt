@@ -31,4 +31,9 @@
 ## Ajoute un bouton de duplication de contenu
 # duplicate-post
 
+## Sécurise Worpress en redirigeant les accès aux pages sensibles
+# rename-wp-login
+# wps-hide-login
+# custom-login-url
+
 # ...

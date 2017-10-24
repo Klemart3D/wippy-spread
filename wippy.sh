@@ -24,7 +24,7 @@ wp_url="http://"$1"/" # "http://localhost:8888/my-project" or "http://monsite.fr
 wp_admin="admin-$1"
 wp_install_path="$HOME/Desktop" # Use "$HOME" instead of "~"" (tilde) for home user directory
 wp_title=$2
-wp_description=$wp_title
+wp_description="Bienvenue sur le site de $wp_title"
 
 # Database settings
 db_host="127.0.0.1" # Default "localhost". If doesn't works try "127.0.0.1"
@@ -141,8 +141,9 @@ bot "J'ai récupéré la version `wp core version` de WordPress"
 
 # Create base configuration
 bot "Je lance la configuration…"
-wp core config --dbhost=$db_host --dbname=$db_name --dbuser=$db_user --dbpass=$db_password --skip-check --extra-php <<PHP
+wp core config --dbhost=$db_host --dbname=$db_name --dbuser=$db_user --dbpass=$db_password --dbprefix=k3d_ --skip-check --extra-php <<PHP
 define( 'WP_DEBUG', true );
+define( 'DISALLOW_FILE_EDIT', true );
 PHP
 
 # Create database
@@ -193,7 +194,7 @@ echo $password | pbcopy # Copy password in clipboard
 bot "J'ai copié le mot de passe ${cyan}$password${normal} dans le presse-papier !"
 
 # Plugins install
-bot "J'installe les plugins à partir de la liste des plugins…"
+bot "J'installe les plugins de la liste et je met à jour ceux qui le nécessitent…"
 while IFS=$' \t\n\r' read -r plugin  || [ -n "$plugin" ] # Fix Posix ignored last line
 do
   # Ignore comments and new linebreaks
@@ -201,17 +202,19 @@ do
     wp plugin install $plugin --activate
   fi 
 done < $pluginfilepath
+wp plugin update --all # Update all plugins even already installed
 
 # Download and install WordPress theme
 bot "Je télécharge le thème désiré…"
 if [[ $wp_theme =~ ^git@* ]] && git ls-remote $wp_theme &> /dev/null; then
   cd wp-content/themes/
   git clone $wp_theme
-  wp_theme_name=`basename $wp_theme .git`
-  wp theme activate $wp_theme_name
+  wp_theme=`basename $wp_theme .git`
+  wp theme activate $wp_theme
 else
   wp theme install $wp_theme --activate 
 fi
+theme_path=$(wp theme path $wp_theme --dir)
 
 # Cleanup
 bot "Je supprime Hello Dolly, les thèmes de base et les articles exemples…"
@@ -222,9 +225,7 @@ wp theme delete twentyseventeen
 wp post delete $(wp post list --post_type='page' --format=ids) --force
 wp post delete $(wp post list --post_type='post' --format=ids) --force
 wp term update category 1 --name="Nouveautés" # Rename default "uncategorized" category 
-if [ -d "$pathtoinstall/wp-config-sample.php" ]; then
-  rm "$pathtoinstall/wp-config-sample.php" # Deleting sample config file
-fi
+[ -e "$pathtoinstall/wp-config-sample.php" ] && rm "$pathtoinstall/wp-config-sample.php" # Deleting sample config file
 
 # Create standard pages
 bot "Je met en place l'arborescence du site…"
@@ -290,8 +291,29 @@ wp option update default_comment_status 0 # Disable comments, overridable by pos
 wp option update comment_registration 1 # Users must be logged in to comment 
 wp option update uploads_use_yearmonth_folders 0 # Disable year/month folders for medias
 
+# Security misc
+bot "Je sécurise Wordpress, masque les infos de version, désactive les flux RSS…"
+echo "remove_action( 'wp_head', ' wp_generator' );" >> "$theme_path/functions.php" # Remove WP version
+echo "remove_action( 'wp_head', 'wlwmanifest_link' );" >> "$theme_path/functions.php" # Disable Windows Live Writer service
+echo "remove_action( 'wp_head', 'rsd_link' );" >> "$theme_path/functions.php" # Disable Really Simple Discovery service
+echo "function disable_version() { return ''; } " >> "$theme_path/functions.php"
+echo "add_filter( 'the_generator', 'disable_version' );" >> "$theme_path/functions.php" # Disable WP version info
+echo "add_filter( 'login_errors', create_function('$a', \"return null;\") );" >> "$theme_path/functions.php" # Disable login errors
+echo "function wpb_disable_feed() {" >> "$theme_path/functions.php" # Disable feeds
+echo "wp_die( __( 'No feed available. Please visit our <a href=\"'. get_bloginfo('url') .'\">homepage</a>!') );}" >> "$theme_path/functions.php"
+echo "add_action( 'do_feed', 'wpb_disable_feed',1 );" >> "$theme_path/functions.php"
+echo "add_action( 'do_feed_rdf', 'wpb_disable_feed',1 );" >> "$theme_path/functions.php"
+echo "add_action( 'do_feed_rss', 'wpb_disable_feed',1 );" >> "$theme_path/functions.php"
+echo "add_action( 'do_feed_rss2', 'wpb_disable_feed',1 );" >> "$theme_path/functions.php"
+echo "add_action( 'do_feed_atom', 'wpb_disable_feed',1 );" >> "$theme_path/functions.php"
+echo "add_action( 'do_feed_rss2_comments', 'wpb_disable_feed', 1 );" >> "$theme_path/functions.php"
+echo "add_action( 'do_feed_atom_comments', 'wpb_disable_feed', 1 );" >> "$theme_path/functions.php"
+[ -e "$pathtoinstall/readme.html" ] && rm "$pathtoinstall/readme.html" # Deleting readme file
+[ -e "$pathtoinstall/license.txt" ] && rm "$pathtoinstall/license.txt" # Deleting license file
+
+
 # Permalinks to /%postname%/
-bot "J'active la structure des permaliens…"
+bot "J'active la structure des permaliens et regénère le .htaccess…"
 wp rewrite structure "/%postname%/" --hard
 wp rewrite flush --hard # Regenerate .htaccess file
 
@@ -319,7 +341,7 @@ if ! type subl &> /dev/null; then
   fi
 fi
 if type subl &> /dev/null; then
-  subl $pathtoinstall/wp-content/themes
+  subl $theme_path
 fi  
 open $pathtoinstall # Open in Finder
 
