@@ -1,34 +1,34 @@
 ## ========================================= ##
 ##  LISTE DES PLUGINS WORDPRESS À INSTALLER  ##
 ## ========================================= ##
-## Inscrire l’identifiant d’un plugin par ligne
-## L'identifiant est le nom du plugin utilisé dans son URL
-## Par ex : "wordpress-seo" pour Yoast SEO
+## Inscrire le slug d’un plugin par ligne
+## Le slug est l'identifiant du plugin utilisé dans son URL
+## Par exemple : "wordpress-seo" pour Yoast SEO
 ## Voir : https://wordpress.org/plugins/tags/extension
 ## NB : les lignes commençant par # et les sauts de ligne sont ignorés
 
-# Optimisation de contenu Yoast SEO
-wordpress-seo
+## Optimisation de contenu Yoast SEO
+# wordpress-seo
 
-# Formulaires de contact
-contact-form-7
+## Formulaires de contact
+# contact-form-7
 
-# Pour sécuriser, fidéliser et augmenter le trafic
-jetpack
+## Pour sécuriser, fidéliser et augmenter le trafic
+# jetpack
 
-# Protection contre les spams
-akismet
+## Protection contre les spams
+# akismet
 
-# La puissante et extensible extension e-commerce
-woocommerce
+## La puissante et extensible extension e-commerce
+# woocommerce
 
-# Générateur de sitemaps pour Google, Being, Yahoo!
-google-sitemap-generator
+## Générateur de sitemaps pour Google, Being, Yahoo!
+# google-sitemap-generator
 
-# Améliorer et personnaliser l'éditeur visuel de contenu
-tinymce-advanced
+## Améliorer et personnaliser l'éditeur visuel de contenu
+# tinymce-advanced
 
-# Ajoute un bouton de duplication de contenu
-duplicate-post
+## Ajoute un bouton de duplication de contenu
+# duplicate-post
 
 # ...
