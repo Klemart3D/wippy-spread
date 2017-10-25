@@ -15,3 +15,9 @@ Télécharger le zip ou juste le fichier [wippy.sh](https://github.com/Klemart3D
 
 * Afficher l'aide : `sh wippy.sh`
 * Lancer l'installation : `sh wippy.sh monsite.fr "Mon nouveau site"`
+
+## Exemple
+
+Cette installation complète a été réalisée en 1 minute et 38 secondes :
+
+![](wippy-sample.jpg)
