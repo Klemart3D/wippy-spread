@@ -32,11 +32,14 @@ db_name=$1
 db_user="root"
 db_password="root" # "root" ou "" (empty) for dev local
 
+# Absolute path of directory script. !! DON'T MODIFY !!
+wippy_dir=$(cd "$(dirname $0)";pwd -P)
+
 # Plugins : path to plugins.txt
-pluginfilepath="$PWD/plugins.txt" # "$PWD" = same folder as wippy.sh
+pluginfilepath="$wippy_dir/plugins.txt" # "$wippy_dir" = same folder as wippy.sh
 
 # Menu tree : path to tree.txt
-wp_tree_file="$PWD/tree.txt" # "$PWD" = same folder as wippy.sh
+wp_tree_file="$wippy_dir/tree.txt" # "$wippy_dir" = same folder as wippy.sh
 
 # Theme : WordPress slug theme name ("twentysixteen"), path to a ZIP file or git URL ("git@github.com:…")
 wp_theme="Sydney"
@@ -78,7 +81,7 @@ function bot {
 #  ==============================
 
 # Welcome !
-bot "${blue}${bold}Bonjour ! Je suis Wippy.${normal}"
+bot "${blue}${bold}Bonjour ! Je suis Wippy. $script_dir${normal}"
 
 # Check for PHP and WP-CLI installations
 if ! type php &> /dev/null; then
@@ -144,6 +147,8 @@ bot "Je lance la configuration…"
 wp core config --dbhost=$db_host --dbname=$db_name --dbuser=$db_user --dbpass=$db_password --dbprefix=k3d_ --skip-check --extra-php <<PHP
 define( 'WP_DEBUG', true );
 define( 'DISALLOW_FILE_EDIT', true );
+define( 'WP_CONTENT_DIR', dirname(__FILE__) . '/wp-content' );
+define( 'WP_CONTENT_URL', 'http://$1/wp-content' );
 PHP
 
 # Create database
@@ -193,8 +198,33 @@ wp core install --url=$wp_url --title="$wp_title" --admin_user=$wp_admin --admin
 echo $password | pbcopy # Copy password in clipboard
 bot "J'ai copié le mot de passe ${cyan}$password${normal} dans le presse-papier !"
 
+# Restructuration
+bot "Je restructure le dossier WordPress pour faciliter sa maintenance…"
+cd $pathtoinstall
+mkdir wp-cms
+shopt -s extglob # Allow more advanced pattern matching
+mv !(wp-cms|wp-content|wp-config.php|.htaccess) wp-cms
+echo "         J'ai déplacé les fichiers du cœur de Wordpress dans le dossier \"wp-cms\""
+cp wp-cms/index.php index.php
+sed -i '' "s/\/wp-blog-header.php/\/wp-cms\/wp-blog-header.php/g" index.php
+echo "         J'ai modifié le fichier index.php en conséquence."
+if [ ! -e .htaccess ]; then
+  echo "<IfModule mod_rewrite.c>" >> .htaccess
+  echo "  RewriteEngine On" >> .htaccess
+  echo "  RewriteCond %{HTTP_HOST} ^(www.)?$1$" >> .htaccess
+  echo "  RewriteCond %{REQUEST_URI} !^/wp-cms/" >> .htaccess
+  echo "  RewriteCond %{REQUEST_FILENAME} !-f" >> .htaccess
+  echo "  RewriteCond %{REQUEST_FILENAME} !-d" >> .htaccess
+  echo "  RewriteRule ^(.*)$ /wp-cms/\$1" >> .htaccess
+  echo "  RewriteCond %{HTTP_HOST} ^(www.)?$1$" >> .htaccess
+  echo "  RewriteRule ^(/)?$ wp-cms/index.php [L] " >> .htaccess
+  echo "</IfModule>" >> .htaccess
+  echo "         J'ai créé le fichier .htaccess qui convient."
+fi
+
 # Plugins install
 bot "J'installe les plugins de la liste et je met à jour ceux qui le nécessitent…"
+cd $pathtoinstall/wp-cms
 while IFS=$' \t\n\r' read -r plugin  || [ -n "$plugin" ] # Fix Posix ignored last line
 do
   # Ignore comments and new linebreaks
@@ -207,7 +237,7 @@ wp plugin update --all # Update all plugins even already installed
 # Download and install WordPress theme
 bot "Je télécharge le thème désiré…"
 if [[ $wp_theme =~ ^git@* ]] && git ls-remote $wp_theme &> /dev/null; then
-  cd wp-content/themes/
+  cd $pathtoinstall/wp-content/themes/
   git clone $wp_theme
   wp_theme=`basename $wp_theme .git`
   wp theme activate $wp_theme
@@ -310,7 +340,6 @@ echo "add_action( 'do_feed_rss2_comments', 'wpb_disable_feed', 1 );" >> "$theme_
 echo "add_action( 'do_feed_atom_comments', 'wpb_disable_feed', 1 );" >> "$theme_path/functions.php"
 [ -e "$pathtoinstall/readme.html" ] && rm "$pathtoinstall/readme.html" # Deleting readme file
 [ -e "$pathtoinstall/license.txt" ] && rm "$pathtoinstall/license.txt" # Deleting license file
-
 
 # Permalinks to /%postname%/
 bot "J'active la structure des permaliens et regénère le .htaccess…"
