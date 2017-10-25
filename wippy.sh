@@ -228,6 +228,7 @@ cp $WP_CORE_DIR/index.php index.php
 sed -i '' "s/\/wp-blog-header.php/\/$WP_CORE_DIR\/wp-blog-header.php/g" index.php
 echo "         J'ai modifié le fichier index.php en conséquence."
 if [ ! -e .htaccess ]; then
+  echo "#### URL REWRITING CONFIG ####" >> .htaccess
   echo "<IfModule mod_rewrite.c>" >> .htaccess
   echo "  RewriteEngine On" >> .htaccess
   echo "  RewriteCond %{HTTP_HOST} ^(www.)?$WP_DOMAIN$" >> .htaccess
@@ -238,6 +239,15 @@ if [ ! -e .htaccess ]; then
   echo "  RewriteCond %{HTTP_HOST} ^(www.)?$1$" >> .htaccess
   echo "  RewriteRule ^(/)?$ $WP_CORE_DIR/index.php [L] " >> .htaccess
   echo "</IfModule>" >> .htaccess
+  echo "#### FILES PROTECTION CONFIG ####" >> .htaccess
+  echo "<Files .htaccess>" >> .htaccess
+  echo "    Order allow,deny" >> .htaccess
+  echo "    Deny from all" >> .htaccess
+  echo "</Files>" >> .htaccess
+  echo "<Files wp-config.php>" >> .htaccess
+  echo "    Order allow,deny" >> .htaccess
+  echo "    Deny from all" >> .htaccess
+  echo "</Files>" >> .htaccess
   echo "         J'ai créé le fichier .htaccess qui convient."
 fi
 
