@@ -158,6 +158,8 @@ define( 'WP_DEBUG', true );
 define( 'DISALLOW_FILE_EDIT', true );
 define( 'WP_CONTENT_DIR', dirname(__FILE__) . '/$WP_CONTENT_DIR' );
 define( 'WP_CONTENT_URL', 'http://$WP_DOMAIN/$WP_CONTENT_DIR' );
+if ( ! defined( 'ABSPATH' ) )
+  define( 'ABSPATH', dirname( __FILE__ ) . '/$WP_CORE_DIR/' );
 PHP
 
 # Check mysql availability
