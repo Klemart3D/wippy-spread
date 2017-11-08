@@ -156,6 +156,7 @@ bot "Je lance la configuration…"
 wp core config --dbhost=$DB_HOST --dbname=$DB_NAME --dbuser=$DB_USER --dbpass=$DB_PASSWORD --dbprefix=$DB_PREFIX --skip-check --extra-php <<PHP
 define( 'WP_DEBUG', true );
 define( 'DISALLOW_FILE_EDIT', true );
+define( 'WP_MEMORY_LIMIT', '96M' );
 define( 'WP_CONTENT_DIR', dirname(__FILE__) . '/$WP_CONTENT_DIR' );
 define( 'WP_CONTENT_URL', 'http://$WP_DOMAIN/$WP_CONTENT_DIR' );
 if ( ! defined( 'ABSPATH' ) )
