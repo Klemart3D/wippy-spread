@@ -348,7 +348,11 @@ do
       REF_MENU=$MENU_ID
       REF_P1=""
       REF_P2=""
-      [[ $FIRST_MENU = 1 ]] && wp menu location assign "$TREE_LINE" primary
+      if [[ $FIRST_MENU = 1 ]]; then
+        # Get primary menu location name of theme (usually "primary" or "top")
+        LOC_MENU_NAME=$(wp menu location list --format=ids | awk '{print $1;}')
+        wp menu location assign "$TREE_LINE" "$LOC_MENU_NAME"
+      fi
       FIRST_MENU=0
     fi
   fi
