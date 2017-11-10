@@ -159,8 +159,6 @@ define( 'DISALLOW_FILE_EDIT', true );
 define( 'WP_MEMORY_LIMIT', '96M' );
 define( 'WP_CONTENT_DIR', dirname(__FILE__) . '/$WP_CONTENT_DIR' );
 define( 'WP_CONTENT_URL', 'http://$WP_DOMAIN/$WP_CONTENT_DIR' );
-if ( ! defined( 'ABSPATH' ) )
-  define( 'ABSPATH', dirname( __FILE__ ) . '/$WP_CORE_DIR/' );
 PHP
 
 # Check mysql availability
@@ -234,6 +232,7 @@ if [ ! -e .htaccess ]; then
   echo "#### URL REWRITING CONFIG ####" >> .htaccess
   echo "<IfModule mod_rewrite.c>" >> .htaccess
   echo "  RewriteEngine On" >> .htaccess
+  echo "  RewriteRule ^wp\-admin$ wp-admin/ [L,R=301]" >> .htaccess
   echo "  RewriteCond %{HTTP_HOST} ^(www.)?$WP_DOMAIN$" >> .htaccess
   echo "  RewriteCond %{REQUEST_URI} !^/$WP_CORE_DIR/" >> .htaccess
   echo "  RewriteCond %{REQUEST_FILENAME} !-f" >> .htaccess
