@@ -16,9 +16,6 @@
 ## Pour sécuriser, fidéliser et augmenter le trafic
 # jetpack
 
-## Protection contre les spams
-# akismet
-
 ## La puissante et extensible extension e-commerce
 # woocommerce
 
@@ -28,12 +25,26 @@
 ## Améliorer et personnaliser l'éditeur visuel de contenu
 # tinymce-advanced
 
-## Ajoute un bouton de duplication de contenu
+## Ajouter un bouton de duplication de contenu
 # duplicate-post
+
+## Mettre le site en maintenance
+# wp-maintenance
+
+## Constructeur de page "One page" à la volée
+siteorigin-panels
+# elementor
+# tx-onepager
+
+## Sécuriser la page d'authentification admin
+# loginizer
 
 ## Sécurise Worpress en redirigeant les accès aux pages sensibles
 # rename-wp-login
 # wps-hide-login
 # custom-login-url
+
+## Faire remonter ses flux Facebook, Twitter, Instagram… sur Wordpress
+# feed-them-social
 
 # ...
