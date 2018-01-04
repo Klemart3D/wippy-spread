@@ -232,6 +232,7 @@ if [ ! -e .htaccess ]; then
   echo "#### URL REWRITING CONFIG ####" >> .htaccess
   echo "<IfModule mod_rewrite.c>" >> .htaccess
   echo "  RewriteEngine On" >> .htaccess
+  echo "  RewriteBase /" >> .htaccess
   echo "  RewriteRule ^wp\-admin$ wp-admin/ [L,R=301]" >> .htaccess
   echo "  RewriteCond %{HTTP_HOST} ^(www.)?$WP_DOMAIN$" >> .htaccess
   echo "  RewriteCond %{REQUEST_URI} !^/$WP_CORE_DIR/" >> .htaccess
